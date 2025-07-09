@@ -38,6 +38,14 @@ export interface UpdateSummary {
 }
 
 export class RepoUpdateProtocol {
+  private githubUsername: string | null = null;
+  
+  /**
+   * Set GitHub username for repo creation
+   */
+  setGitHubUsername(username: string): void {
+    this.githubUsername = username;
+  }
   
   /**
    * Execute the full repository update protocol
@@ -102,13 +110,40 @@ export class RepoUpdateProtocol {
   private createGitStep(options: RepoUpdateOptions): { result: StepResult; instructions: BrainToolInstruction[] } {
     const instructions: BrainToolInstruction[] = [];
     
-    // Provide git command instructions
+    // First check if git repo exists, initialize if needed
+    const initCheck = `
+# Check and initialize git if needed
+if [ ! -d .git ]; then
+  echo "Initializing git repository..."
+  git init
+  git add -A
+  git commit -m "Initial commit: ${options.projectName}"
+  echo "Git repository initialized"
+  echo "Create repo at: https://github.com/new"
+  echo "Then: git remote add origin git@github.com:${this.githubUsername || 'YOUR_USERNAME'}/${options.projectName}.git"
+  echo "      git branch -M main"
+  echo "      git push -u origin main"
+fi
+`;
+    
+    instructions.push({
+      tool: 'brain:brain_execute',
+      args: {
+        code: initCheck,
+        description: 'Check and initialize git if needed',
+        language: 'shell'
+      },
+      description: 'Ensure git repository exists'
+    });
+    
+    // Then provide normal git operations
     const commitMsg = options.commitMessage || this.generateCommitMessage(options);
     const gitCommands = `
 # Git operations for ${options.projectName}
 git add -A
 git commit -m "${commitMsg}"
-git push origin main
+# Try to push, will fail gracefully if no remote
+git push origin main 2>/dev/null || echo "No remote configured yet"
 `;
 
     instructions.push({

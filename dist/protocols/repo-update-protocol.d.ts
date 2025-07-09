@@ -32,6 +32,11 @@ export interface UpdateSummary {
     notes: string[];
 }
 export declare class RepoUpdateProtocol {
+    private githubUsername;
+    /**
+     * Set GitHub username for repo creation
+     */
+    setGitHubUsername(username: string): void;
     /**
      * Execute the full repository update protocol
      */
