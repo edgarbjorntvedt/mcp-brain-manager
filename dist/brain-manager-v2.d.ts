@@ -6,6 +6,7 @@
 import { BrainToolInstruction } from './brain-instructions.js';
 import { ProjectConfiguration } from './config/secure-config.js';
 import { RepoUpdateOptions } from './protocols/repo-update-protocol.js';
+import { CreateProjectOptions } from './protocols/create-project-protocol.js';
 export interface SessionContext {
     timestamp: string;
     lastProject: string;
@@ -74,6 +75,8 @@ export declare class BrainManagerV2 {
     private secureConfig;
     private secureSessionToken;
     private repoUpdateProtocol;
+    private createProjectProtocol;
+    private githubUsername;
     constructor();
     initialize(existingSession?: SessionContext, existingProject?: ProjectContext): Promise<InitializationResult>;
     loadSessionData(session: SessionContext | null, project: ProjectContext | null): void;
@@ -167,6 +170,13 @@ export declare class BrainManagerV2 {
         action: string;
         result: any;
         instructions: BrainToolInstruction[];
+    }>;
+    createProject(options: CreateProjectOptions): Promise<{
+        success: boolean;
+        projectPath: string;
+        summary: string;
+        instructions: BrainToolInstruction[];
+        nextSteps: string[];
     }>;
 }
 //# sourceMappingURL=brain-manager-v2.d.ts.map

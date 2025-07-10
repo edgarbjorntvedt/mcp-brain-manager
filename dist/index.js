@@ -275,6 +275,59 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     },
                     required: ['command']
                 }
+            },
+            {
+                name: 'create_project',
+                description: 'Create a new project with full setup including Git, GitHub, testing, and Brain integration',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        projectName: {
+                            type: 'string',
+                            description: 'Name of the project to create'
+                        },
+                        projectType: {
+                            type: 'string',
+                            enum: ['mcp-tool', 'web-app', 'cli-tool', 'library', 'api', 'general'],
+                            description: 'Type of project to create'
+                        },
+                        description: {
+                            type: 'string',
+                            description: 'Project description'
+                        },
+                        visibility: {
+                            type: 'string',
+                            enum: ['public', 'private'],
+                            default: 'public',
+                            description: 'GitHub repository visibility'
+                        },
+                        language: {
+                            type: 'string',
+                            enum: ['typescript', 'javascript'],
+                            default: 'typescript',
+                            description: 'Programming language'
+                        },
+                        features: {
+                            type: 'object',
+                            properties: {
+                                typescript: { type: 'boolean', default: true },
+                                testing: { type: 'boolean', default: true },
+                                linting: { type: 'boolean', default: true },
+                                docker: { type: 'boolean', default: false },
+                                cicd: { type: 'boolean', default: true },
+                                vscode: { type: 'boolean', default: true }
+                            },
+                            description: 'Optional features to include'
+                        },
+                        license: {
+                            type: 'string',
+                            enum: ['MIT', 'Apache-2.0', 'GPL-3.0', 'ISC', 'None'],
+                            default: 'MIT',
+                            description: 'License type'
+                        }
+                    },
+                    required: ['projectName', 'projectType']
+                }
             }
         ]
     };
@@ -437,6 +490,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                         {
                             type: 'text',
                             text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
+            }
+            case 'create_project': {
+                const result = await brainManager.createProject(args);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: result.summary
+                        },
+                        {
+                            type: 'text',
+                            text: '\n### Instructions to execute:\n' + JSON.stringify(result.instructions, null, 2)
                         }
                     ]
                 };

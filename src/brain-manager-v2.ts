@@ -10,6 +10,7 @@ import { AutomatedProjectCreator, ProjectCreationOptions } from './config/projec
 import { SecureConfigManager, ProjectConfiguration } from './config/secure-config.js';
 import { validateForSensitiveData, sanitizeSensitiveData, createPasswordPromptConfig } from './security/validators.js';
 import { RepoUpdateProtocol, RepoUpdateOptions } from './protocols/repo-update-protocol.js';
+import { CreateProjectProtocol, CreateProjectOptions } from './protocols/create-project-protocol.js';
 
 export interface SessionContext {
   timestamp: string;
@@ -94,11 +95,14 @@ export class BrainManagerV2 {
   private secureConfig: SecureConfigManager;
   private secureSessionToken: string | null = null;
   private repoUpdateProtocol: RepoUpdateProtocol;
+  private createProjectProtocol: CreateProjectProtocol;
+  private githubUsername: string | null = null;
   
   constructor() {
     this.projectCreator = new AutomatedProjectCreator();
     this.secureConfig = new SecureConfigManager();
     this.repoUpdateProtocol = new RepoUpdateProtocol();
+    this.createProjectProtocol = new CreateProjectProtocol();
   }
 
   async initialize(
@@ -1010,6 +1014,88 @@ Execute the following commands and brain tool calls as provided.
       }
     }
 
+    // Project creation
+    if (lowerCommand.includes('create project') ||
+        lowerCommand.includes('new project') ||
+        lowerCommand.includes('make project')) {
+      // Extract project name from command
+      const projectMatch = command.match(/(?:create|new|make)\s+(?:project\s+)?([\w-]+)/i);
+      if (projectMatch) {
+        const projectName = projectMatch[1];
+        // Try to determine project type from command
+        let projectType: CreateProjectOptions['projectType'] = 'general';
+        if (lowerCommand.includes('mcp')) projectType = 'mcp-tool';
+        else if (lowerCommand.includes('cli')) projectType = 'cli-tool';
+        else if (lowerCommand.includes('web')) projectType = 'web-app';
+        else if (lowerCommand.includes('api')) projectType = 'api';
+        else if (lowerCommand.includes('library') || lowerCommand.includes('lib')) projectType = 'library';
+        
+        const result = await this.createProject({
+          projectName,
+          projectType,
+          language: 'typescript',
+          features: {
+            typescript: true,
+            testing: true,
+            linting: true,
+            cicd: true,
+            vscode: true
+          }
+        });
+        return {
+          action: 'create_project',
+          result,
+          instructions: result.instructions
+        };
+      }
+    }
+
     throw new Error(`Unknown workflow command: ${command}`);
+  }
+
+  async createProject(
+    options: CreateProjectOptions
+  ): Promise<{
+    success: boolean;
+    projectPath: string;
+    summary: string;
+    instructions: BrainToolInstruction[];
+    nextSteps: string[];
+  }> {
+    // Set GitHub username if available
+    if (this.githubUsername) {
+      this.createProjectProtocol.setGitHubUsername(this.githubUsername);
+    }
+
+    const result = await this.createProjectProtocol.executeCreate(options);
+
+    // Format summary for display
+    const summary = `
+## Project Created Successfully! 🎉
+
+### Project Details:
+- **Name:** ${result.summary.projectName}
+- **Type:** ${result.summary.projectType}
+- **Location:** ${result.summary.location}
+${result.summary.githubRepo ? `- **Repository:** ${result.summary.githubRepo}` : ''}
+
+### Setup Complete:
+${result.summary.gitInitialized ? '✅' : '❌'} Git initialized
+${result.summary.testsCreated ? '✅' : '❌'} Tests created
+${result.summary.documentationCreated ? '✅' : '❌'} Documentation created
+${result.summary.dependenciesInstalled ? '✅' : '❌'} Dependencies installed
+${result.summary.brainIntegrated ? '✅' : '❌'} Brain integration
+
+### Next Steps:
+${result.nextSteps.map(step => `- ${step}`).join('\n')}
+`;
+
+    return {
+      success: result.success,
+      projectPath: result.projectPath,
+      summary,
+      instructions: result.instructions,
+      nextSteps: result.nextSteps
+    };
   }
 }
