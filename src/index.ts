@@ -325,14 +325,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         );
         
         return {
-          initialized: result.initialized,
-          mode: classification.mode,
-          confidence: classification.confidence,
-          reasoning: classification.reasoning,
-          instructions: result.instructions,
-          suggestedActions: result.suggestedActions,
-          lastSession: args.sessionData || null,
-          currentProject: args.projectData || null
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                initialized: result.initialized,
+                mode: classification.mode,
+                confidence: classification.confidence,
+                reasoning: classification.reasoning,
+                instructions: result.instructions,
+                suggestedActions: result.suggestedActions,
+                lastSession: args.sessionData || null,
+                currentProject: args.projectData || null
+              }, null, 2)
+            }
+          ]
         };
       }
 
@@ -341,7 +348,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           (args.message as string),
           (args.context as any) || {}
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'propose_update': {
@@ -350,7 +364,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.updates,
           args.projectName as string
         );
-        return proposal;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(proposal, null, 2)
+            }
+          ]
+        };
       }
 
       case 'confirm_update': {
@@ -358,7 +379,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           (args.updateId as string),
           args.modifications
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'switch_project': {
@@ -368,12 +396,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.template as string,
           args.projectData as ProjectContext | undefined
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'return_to_previous': {
         const result = await brainManager.returnToPrevious();
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'generate_dashboard': {
@@ -381,7 +423,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.projectName as string,
           (args.includeAnalytics as boolean) || false
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'analyze_patterns': {
@@ -389,12 +438,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           (args.timeframe as string),
           args.focusArea as string | undefined
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'get_context_summary': {
         const result = await brainManager.getContextSummary((args.verbose as boolean));
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'update_repository': {
@@ -406,7 +469,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             createSummary: (args.createSummary as boolean) ?? true
           }
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'generate_summary': {
@@ -414,14 +484,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.changes as string[] | undefined,
           args.notes as string[] | undefined
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       case 'handle_workflow': {
         const result = await brainManager.handleWorkflowCommand(
           args.command as string
         );
-        return result;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
       }
 
       default:

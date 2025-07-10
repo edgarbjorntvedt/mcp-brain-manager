@@ -299,47 +299,110 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     conversationHistory: []
                 });
                 return {
-                    initialized: result.initialized,
-                    mode: classification.mode,
-                    confidence: classification.confidence,
-                    reasoning: classification.reasoning,
-                    instructions: result.instructions,
-                    suggestedActions: result.suggestedActions,
-                    lastSession: args.sessionData || null,
-                    currentProject: args.projectData || null
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify({
+                                initialized: result.initialized,
+                                mode: classification.mode,
+                                confidence: classification.confidence,
+                                reasoning: classification.reasoning,
+                                instructions: result.instructions,
+                                suggestedActions: result.suggestedActions,
+                                lastSession: args.sessionData || null,
+                                currentProject: args.projectData || null
+                            }, null, 2)
+                        }
+                    ]
                 };
             }
             case 'semantic_classify': {
                 const result = await semanticRouter.classify(args.message, args.context || {});
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'propose_update': {
                 const proposal = await brainManager.proposeUpdate(args.updateType, args.updates, args.projectName);
-                return proposal;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(proposal, null, 2)
+                        }
+                    ]
+                };
             }
             case 'confirm_update': {
                 const result = await brainManager.confirmUpdate(args.updateId, args.modifications);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'switch_project': {
                 const result = await brainManager.switchProject(args.projectName, args.createIfNotExists || false, args.template, args.projectData);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'return_to_previous': {
                 const result = await brainManager.returnToPrevious();
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'generate_dashboard': {
                 const result = await brainManager.generateDashboard(args.projectName, args.includeAnalytics || false);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'analyze_patterns': {
                 const result = await brainManager.analyzePatterns(args.timeframe, args.focusArea);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'get_context_summary': {
                 const result = await brainManager.getContextSummary(args.verbose);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'update_repository': {
                 const result = await brainManager.updateRepository(args.commitMessage, {
@@ -347,15 +410,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     versionBump: args.versionBump,
                     createSummary: args.createSummary ?? true
                 });
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'generate_summary': {
                 const result = await brainManager.generateProjectSummary(args.changes, args.notes);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             case 'handle_workflow': {
                 const result = await brainManager.handleWorkflowCommand(args.command);
-                return result;
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2)
+                        }
+                    ]
+                };
             }
             default:
                 throw createError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
