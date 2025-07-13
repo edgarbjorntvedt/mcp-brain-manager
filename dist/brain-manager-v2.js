@@ -720,46 +720,173 @@ Execute the following commands and brain tool calls as provided.
                 };
             }
         }
-        // Project creation
+        // Project creation - Planning phase
         if (lowerCommand.includes('create project') ||
             lowerCommand.includes('new project') ||
-            lowerCommand.includes('make project')) {
+            lowerCommand.includes('make project') ||
+            lowerCommand.includes('set up project')) {
             // Extract project name from command
-            const projectMatch = command.match(/(?:create|new|make)\s+(?:project\s+)?([\w-]+)/i);
+            const projectMatch = command.match(/(?:create|new|make|set up)\s+(?:project\s+)?([\w-]+)/i);
             if (projectMatch) {
                 const projectName = projectMatch[1];
-                // Try to determine project type from command
-                let projectType = 'general';
-                if (lowerCommand.includes('mcp'))
-                    projectType = 'mcp-tool';
-                else if (lowerCommand.includes('cli'))
-                    projectType = 'cli-tool';
-                else if (lowerCommand.includes('web'))
-                    projectType = 'web-app';
-                else if (lowerCommand.includes('api'))
-                    projectType = 'api';
-                else if (lowerCommand.includes('library') || lowerCommand.includes('lib'))
-                    projectType = 'library';
-                const result = await this.createProject({
-                    projectName,
-                    projectType,
-                    language: 'typescript',
-                    features: {
-                        typescript: true,
-                        testing: true,
-                        linting: true,
-                        cicd: true,
-                        vscode: true
-                    }
-                });
+                // Return planning phase instead of immediate execution
+                const planResult = await this.planProjectCreation(projectName, command);
                 return {
-                    action: 'create_project',
-                    result,
-                    instructions: result.instructions
+                    action: 'plan_project',
+                    result: planResult,
+                    instructions: []
                 };
             }
         }
+        // Project creation execution (after planning)
+        if (lowerCommand.includes('proceed with') &&
+            (lowerCommand.includes('project') || lowerCommand.includes('creation'))) {
+            // Extract project name from pending plans
+            for (const [key, plan] of this.pendingUpdates.entries()) {
+                if (key.startsWith('project-plan-') && plan.type === 'project-planning') {
+                    // Found a pending project plan
+                    const projectName = plan.projectName;
+                    // Parse any modifications from the command
+                    let projectType = plan.originalUpdates.suggestedType;
+                    let visibility = 'public';
+                    let description = '';
+                    // Check for type override
+                    if (lowerCommand.includes('as mcp'))
+                        projectType = 'mcp-tool';
+                    else if (lowerCommand.includes('as cli'))
+                        projectType = 'cli-tool';
+                    else if (lowerCommand.includes('as web'))
+                        projectType = 'web-app';
+                    else if (lowerCommand.includes('as api'))
+                        projectType = 'api';
+                    else if (lowerCommand.includes('as library'))
+                        projectType = 'library';
+                    // Check for visibility
+                    if (lowerCommand.includes('private'))
+                        visibility = 'private';
+                    // Remove from pending and execute
+                    this.pendingUpdates.delete(key);
+                    const result = await this.createProject({
+                        projectName,
+                        projectType,
+                        description,
+                        visibility,
+                        language: 'typescript',
+                        features: {
+                            typescript: true,
+                            testing: true,
+                            linting: true,
+                            cicd: true,
+                            vscode: true
+                        }
+                    });
+                    return {
+                        action: 'create_project',
+                        result,
+                        instructions: result.instructions
+                    };
+                }
+            }
+            throw new Error('No pending project creation found. Use "create project [name]" first.');
+        }
         throw new Error(`Unknown workflow command: ${command}`);
+    }
+    async planProjectCreation(projectName, originalCommand) {
+        // Try to infer project type from command
+        const lowerCommand = originalCommand.toLowerCase();
+        let suggestedType = 'general';
+        if (lowerCommand.includes('mcp'))
+            suggestedType = 'mcp-tool';
+        else if (lowerCommand.includes('cli'))
+            suggestedType = 'cli-tool';
+        else if (lowerCommand.includes('web'))
+            suggestedType = 'web-app';
+        else if (lowerCommand.includes('api'))
+            suggestedType = 'api';
+        else if (lowerCommand.includes('library') || lowerCommand.includes('lib'))
+            suggestedType = 'library';
+        const questionsToAsk = [
+            `What is the main purpose of ${projectName}?`,
+            'What features or functionality should it have?',
+            'Do you have any specific dependencies or technologies in mind?',
+            'Will this be a public or private repository?',
+            'Any special requirements or integrations needed?'
+        ];
+        const setupPlan = `
+## Project Setup Plan: ${projectName}
+
+### Initial Assessment
+- **Project Name:** ${projectName}
+- **Suggested Type:** ${suggestedType}
+- **Default Language:** TypeScript (can be changed)
+
+### What I'll Set Up Automatically
+1. **Basic Structure:**
+   - Project directory at /Users/bard/Code/${projectName}
+   - Git repository initialization
+   - Standard directories (src, tests, docs)
+
+2. **Development Environment:**
+   - VS Code configuration
+   - TypeScript/JavaScript setup
+   - Testing framework (Jest)
+   - Linting and formatting
+
+3. **Documentation:**
+   - README with your project description
+   - License file
+   - Basic changelog
+
+4. **Integration:**
+   - Brain Manager project tracking
+   - Obsidian project notes
+
+### What I Need to Know
+${questionsToAsk.map((q, i) => `${i + 1}. ${q}`).join('\n')}
+
+### Next Steps
+Once you answer these questions, I'll:
+1. Create a customized project structure
+2. Generate appropriate starter code
+3. Set up all configurations
+4. Create and push to GitHub
+5. Provide clear instructions for getting started
+
+Would you like to proceed with ${suggestedType} as the project type, or would you prefer something different?
+`;
+        // Save project planning state
+        const planningState = {
+            projectName,
+            suggestedType,
+            timestamp: new Date().toISOString(),
+            status: 'planning'
+        };
+        // Store in session for follow-up
+        this.pendingUpdates.set(`project-plan-${projectName}`, {
+            id: `project-plan-${projectName}`,
+            type: 'project-planning',
+            timestamp: new Date().toISOString(),
+            projectName,
+            changesSummary: 'Project creation planning',
+            proposedContext: planningState,
+            originalUpdates: { suggestedType },
+            confirmationPrompt: setupPlan
+        });
+        // Also save to Brain state for persistence
+        const saveInstruction = BrainToolInstructions.stateSet('session', `project-plan-${projectName}`, {
+            projectName,
+            suggestedType,
+            timestamp: new Date().toISOString(),
+            status: 'planning',
+            questionsToAsk
+        });
+        return {
+            projectName,
+            suggestedType,
+            questionsToAsk,
+            setupPlan,
+            readyToProceed: false
+        };
     }
     async createProject(options) {
         // Set GitHub username if available

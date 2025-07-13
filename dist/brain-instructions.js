@@ -46,5 +46,12 @@ export class BrainToolInstructions {
             description: `Obsidian ${action} operation`
         };
     }
+    static custom(tool, args, description) {
+        return {
+            tool,
+            args,
+            description
+        };
+    }
 }
 //# sourceMappingURL=brain-instructions.js.map

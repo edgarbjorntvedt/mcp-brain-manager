@@ -668,7 +668,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     };
 
     instructions.push(
-      BrainToolInstructions.setState('project', options.projectName, projectContext)
+      BrainToolInstructions.stateSet('project', options.projectName, projectContext)
     );
 
     // Create Obsidian note

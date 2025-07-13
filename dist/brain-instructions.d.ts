@@ -15,5 +15,6 @@ export declare class BrainToolInstructions {
     static brainRemember(key: string, value: any, type?: string): BrainToolInstruction;
     static brainRecall(query: string, limit?: number): BrainToolInstruction;
     static obsidianNote(action: string, params: any): BrainToolInstruction;
+    static custom(tool: string, args: any, description: string): BrainToolInstruction;
 }
 //# sourceMappingURL=brain-instructions.d.ts.map

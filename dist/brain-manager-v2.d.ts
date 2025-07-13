@@ -171,6 +171,13 @@ export declare class BrainManagerV2 {
         result: any;
         instructions: BrainToolInstruction[];
     }>;
+    planProjectCreation(projectName: string, originalCommand: string): Promise<{
+        projectName: string;
+        suggestedType: string;
+        questionsToAsk: string[];
+        setupPlan: string;
+        readyToProceed: boolean;
+    }>;
     createProject(options: CreateProjectOptions): Promise<{
         success: boolean;
         projectPath: string;

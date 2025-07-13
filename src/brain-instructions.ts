@@ -58,4 +58,12 @@ export class BrainToolInstructions {
       description: `Obsidian ${action} operation`
     };
   }
+
+  static custom(tool: string, args: any, description: string): BrainToolInstruction {
+    return {
+      tool,
+      args,
+      description
+    };
+  }
 }

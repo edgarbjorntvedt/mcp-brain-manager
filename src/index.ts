@@ -342,6 +342,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['projectName', 'projectType']
         }
+      },
+      {
+        name: 'brain_manager_help',
+        description: 'Get help on using the Brain Manager',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            command: {
+              type: 'string',
+              description: 'Specific command to get help for (or "all" for overview)'
+            }
+          }
+        }
       }
     ]
   };
@@ -572,6 +585,191 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: '\n### Instructions to execute:\n' + JSON.stringify(result.instructions, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'brain_manager_help': {
+        let helpText = '';
+        const command = args.command as string | undefined;
+        
+        if (!command || command === 'all') {
+          helpText = `🧠 Brain Manager Help
+====================
+
+The Brain Manager provides intelligent context management and semantic routing for your projects.
+
+Available commands:
+
+🚀 manager_init - Initialize session and load context
+   Required: message
+   Optional: sessionData, projectData
+
+🎯 semantic_classify - Classify user intent
+   Required: message
+   Optional: context
+
+📝 propose_update - Propose context changes for review
+   Required: updateType, updates
+   Optional: projectName
+
+✅ confirm_update - Confirm and save proposed update
+   Required: updateId
+   Optional: modifications
+
+🔄 switch_project - Switch to different project
+   Required: projectName
+   Optional: createIfNotExists, template, projectData
+
+↩️  return_to_previous - Return to previous project
+
+📊 generate_dashboard - Create Obsidian dashboard
+   Optional: projectName, includeAnalytics
+
+🔍 analyze_patterns - Analyze work patterns
+   Optional: timeframe, focusArea
+
+📋 get_context_summary - Get current context summary
+   Optional: verbose
+
+🔧 update_repository - Execute repository update protocol
+   Optional: commitMessage, includeTests, versionBump, createSummary
+
+📄 generate_summary - Generate project summary note
+   Optional: changes, notes
+
+🤖 handle_workflow - Handle natural language commands
+   Required: command
+
+➕ create_project - Create new project with full setup
+   Required: projectName, projectType
+   Optional: description, visibility, language, features, license
+
+❓ brain_manager_help - Show this help
+   Optional: command (specific command for details)
+
+Use 'brain_manager_help' with a specific command for detailed information.`;
+        } else {
+          switch (command) {
+            case 'manager_init':
+              helpText = `🚀 manager_init - Initialize Brain Manager session
+
+This is typically the first command to run in a session.
+
+Parameters:
+- message (required): Your initial message to determine mode
+- sessionData: Result from brain:state_get("system", "last_session_context")
+- projectData: Result from brain:state_get("project", projectName)
+
+Usage pattern:
+1. First call without data - returns brain tool instructions
+2. Execute the brain tools (brain_init, state_get)
+3. Call again with sessionData/projectData filled in
+
+Example flow:
+// First call
+manager_init { "message": "Let's continue the API project" }
+// Returns instructions to execute brain tools
+
+// After executing brain tools, second call
+manager_init {
+  "message": "Let's continue the API project",
+  "sessionData": { ...result from state_get... },
+  "projectData": { ...if project was loaded... }
+}
+// Returns classified intent and loaded context`;
+              break;
+              
+            case 'propose_update':
+              helpText = `📝 propose_update - Propose context changes for review
+
+Creates a proposal that can be reviewed before saving.
+
+Parameters:
+- updateType (required): Type of update
+  Options: "progress", "decision", "milestone", "insight"
+- updates (required): Update content object
+- projectName: Project to update (uses current if not specified)
+
+Example:
+propose_update {
+  "updateType": "progress",
+  "updates": {
+    "completedTasks": ["Implement authentication"],
+    "newTasks": ["Add error handling"],
+    "currentFocus": "Testing auth flow"
+  }
+}
+
+Returns a proposal with:
+- id: Use this to confirm the update
+- confirmationPrompt: Review text
+- proposedContext: Preview of changes`;
+              break;
+              
+            case 'switch_project':
+              helpText = `🔄 switch_project - Switch to a different project
+
+Saves current context to stack and loads new project.
+
+Parameters:
+- projectName (required): Name of project to switch to
+- createIfNotExists: Create if doesn't exist (default: false)
+- template: Template for new project
+  Options: "software", "research", "ml", "writing", "custom"
+- projectData: Existing data from brain:state_get
+
+Example:
+switch_project {
+  "projectName": "my-api-project",
+  "createIfNotExists": true,
+  "template": "software"
+}`;
+              break;
+              
+            case 'create_project':
+              helpText = `➕ create_project - Create new project with full setup
+
+Creates a complete project with Git, GitHub, testing, and Brain integration.
+
+Parameters:
+- projectName (required): Name of the project
+- projectType (required): Type of project
+  Options: "mcp-tool", "web-app", "cli-tool", "library", "api", "general"
+- description: Project description
+- visibility: "public" or "private" (default: public)
+- language: "typescript" or "javascript" (default: typescript)
+- license: "MIT", "Apache-2.0", "GPL-3.0", "ISC", "None" (default: MIT)
+- features: Object with boolean flags:
+  - typescript (default: true)
+  - testing (default: true)
+  - linting (default: true)
+  - docker (default: false)
+  - cicd (default: true)
+  - vscode (default: true)
+
+Example:
+create_project {
+  "projectName": "my-awesome-tool",
+  "projectType": "mcp-tool",
+  "description": "A tool that does awesome things",
+  "features": {
+    "docker": true
+  }
+}`;
+              break;
+              
+            default:
+              helpText = `Command '${command}' not found. Use 'brain_manager_help' without arguments to see all commands.`;
+          }
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: helpText
             }
           ]
         };

@@ -1180,7 +1180,7 @@ Would you like to proceed with ${suggestedType} as the project type, or would yo
     });
 
     // Also save to Brain state for persistence
-    const saveInstruction = BrainToolInstructions.stateSet(
+    const saveInstruction = BrainToolInstructions.setState(
       'session',
       `project-plan-${projectName}`,
       {
