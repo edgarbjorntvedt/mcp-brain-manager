@@ -657,6 +657,9 @@ Use 'brain_manager_help' with a specific command for detailed information.`;
 
 This is typically the first command to run in a session.
 
+⚠️  IMPORTANT: This command now ALWAYS checks reminders first!
+The awakening protocol and critical instructions are stored in reminders.
+
 Parameters:
 - message (required): Your initial message to determine mode
 - sessionData: Result from brain:state_get("system", "last_session_context")
@@ -664,13 +667,13 @@ Parameters:
 
 Usage pattern:
 1. First call without data - returns brain tool instructions
-2. Execute the brain tools (brain_init, state_get)
+2. Execute the brain tools (check_reminders, brain_init, state_get)
 3. Call again with sessionData/projectData filled in
 
 Example flow:
 // First call
 manager_init { "message": "Let's continue the API project" }
-// Returns instructions to execute brain tools
+// Returns instructions including reminders check
 
 // After executing brain tools, second call
 manager_init {

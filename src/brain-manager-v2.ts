@@ -111,7 +111,14 @@ export class BrainManagerV2 {
   ): Promise<InitializationResult> {
     const instructions: BrainToolInstruction[] = [];
     
-    // Always start with brain_init
+    // CRITICAL: Always check reminders first for bootstrap protocol
+    instructions.push(BrainToolInstructions.custom(
+      'reminders:check_reminders',
+      { filter: 'all' },
+      '[BOOT-001] Check reminders for awakening protocol and critical instructions'
+    ));
+    
+    // Then initialize brain
     instructions.push(BrainToolInstructions.brainInit());
     
     // If no existing session provided, we need to load it
