@@ -1133,7 +1133,7 @@ Execute the following commands and brain tool calls as provided.
 
 ### What I'll Set Up Automatically
 1. **Basic Structure:**
-   - Project directory at /Users/bard/Code/${projectName}
+   - Project directory at /home/edgar/github/${projectName}
    - Git repository initialization
    - Standard directories (src, tests, docs)
 

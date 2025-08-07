@@ -62,7 +62,7 @@ export class AutomatedProjectCreator {
       }
       
       // Generate project setup commands
-      const projectPath = `/Users/bard/Code/${options.name}`;
+      const projectPath = `/home/edgar/github/${options.name}`;
       const setupCommands = this.generateSetupCommands(options, config, projectPath);
       
       // Create instruction to execute all commands

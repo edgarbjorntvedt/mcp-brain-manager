@@ -70,7 +70,7 @@ export class CreateProjectProtocol {
   async executeCreate(options: CreateProjectOptions): Promise<CreateProjectResult> {
     const steps: StepResult[] = [];
     const instructions: BrainToolInstruction[] = [];
-    const projectPath = `/Users/bard/Code/${options.projectName}`;
+    const projectPath = `/home/edgar/github/${options.projectName}`;
     
     const summary: ProjectSummary = {
       projectName: options.projectName,
