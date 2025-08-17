@@ -5,6 +5,8 @@
 
 import { BrainToolInstruction, BrainToolInstructions } from '../brain-instructions.js';
 import { ProjectTemplate } from '../template-manager.js';
+import * as os from 'os';
+import * as path from 'path';
 
 export interface CreateProjectOptions {
   projectName: string;
@@ -58,6 +60,41 @@ export class CreateProjectProtocol {
   private githubUsername: string | null = null;
   
   /**
+   * Get cross-platform project base path
+   */
+  private getProjectBasePath(): string {
+    const homeDir = os.homedir();
+    const platform = os.platform();
+    
+    switch (platform) {
+      case 'win32':
+        return path.join(homeDir, 'Projects');
+      case 'darwin':
+        return path.join(homeDir, 'Projects');
+      default: // linux, freebsd, etc.
+        return path.join(homeDir, 'github');
+    }
+  }
+
+  /**
+   * Get cross-platform environment setup for shell commands
+   */
+  private getEnvironmentSetup(): string {
+    const homeDir = os.homedir();
+    
+    // Simply export the correct HOME directory
+    return `
+# Cross-platform environment setup (Node.js detected)
+export HOME="${homeDir}"
+
+# Verify gh CLI is available
+if ! command -v gh >/dev/null 2>&1; then
+  echo "Warning: GitHub CLI (gh) not found. Install from https://cli.github.com/"
+fi
+`;
+  }
+
+  /**
    * Set GitHub username for repo creation
    */
   setGitHubUsername(username: string): void {
@@ -70,7 +107,7 @@ export class CreateProjectProtocol {
   async executeCreate(options: CreateProjectOptions): Promise<CreateProjectResult> {
     const steps: StepResult[] = [];
     const instructions: BrainToolInstruction[] = [];
-    const projectPath = `/home/edgar/github/${options.projectName}`;
+    const projectPath = `${this.getProjectBasePath()}/${options.projectName}`;
     
     const summary: ProjectSummary = {
       projectName: options.projectName,
@@ -400,7 +437,10 @@ export class CreateProjectProtocol {
   private initializeGit(options: CreateProjectOptions, projectPath: string): { result: StepResult; instructions: BrainToolInstruction[] } {
     const instructions: BrainToolInstruction[] = [];
     
-    const gitCommands = `
+    // Cross-platform environment setup
+    const environmentSetup = this.getEnvironmentSetup();
+    
+    const gitCommands = `${environmentSetup}
 cd ${projectPath}
 git init
 git add -A

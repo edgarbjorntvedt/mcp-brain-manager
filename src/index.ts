@@ -292,7 +292,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'create_project',
-        description: 'Create a new project with full setup including Git, GitHub, testing, and Brain integration',
+        description: 'Generate complete project setup instructions including all files, Git, GitHub, testing, and Brain integration. Execute the returned instructions to create the project.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -584,7 +584,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
             {
               type: 'text',
-              text: '\n### Instructions to execute:\n' + JSON.stringify(result.instructions, null, 2)
+              text: '\n🚀 **EXECUTE THESE INSTRUCTIONS TO CREATE THE PROJECT:**\n\nThe following tools need to be called in order:\n\n' + 
+                    result.instructions.map((inst, i) => 
+                      `${i+1}. ${inst.tool} - ${inst.description}`
+                    ).join('\n') + 
+                    '\n\n**Full instruction details:**\n' + JSON.stringify(result.instructions, null, 2)
             }
           ]
         };
@@ -642,9 +646,10 @@ Available commands:
 🤖 handle_workflow - Handle natural language commands
    Required: command
 
-➕ create_project - Create new project with full setup
+➕ create_project - Generate project setup instructions
    Required: projectName, projectType
    Optional: description, visibility, language, features, license
+   Note: Execute returned instructions to create the project
 
 ❓ brain_manager_help - Show this help
    Optional: command (specific command for details)
@@ -732,9 +737,11 @@ switch_project {
               break;
               
             case 'create_project':
-              helpText = `➕ create_project - Create new project with full setup
+              helpText = `➕ create_project - Generate complete project setup instructions
 
-Creates a complete project with Git, GitHub, testing, and Brain integration.
+Generates detailed instructions for creating a complete project with Git, GitHub, testing, and Brain integration.
+
+⚠️ IMPORTANT: This tool generates instructions that you must execute to actually create the project.
 
 Parameters:
 - projectName (required): Name of the project
@@ -760,7 +767,9 @@ create_project {
   "features": {
     "docker": true
   }
-}`;
+}
+
+After calling this, execute all returned instructions in the order specified.`;
               break;
               
             default:
