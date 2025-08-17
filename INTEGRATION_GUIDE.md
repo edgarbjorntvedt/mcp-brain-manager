@@ -292,6 +292,30 @@ get_context_summary({ verbose: true })
 // Returns current state, cached projects, pending updates
 ```
 
+## Environment Configuration
+
+### CODE_PATH Environment Variable
+
+The Brain Manager uses a configurable base path for project creation:
+
+```json
+{
+  "mcpServers": {
+    "brain-manager": {
+      "command": "node",
+      "args": ["/Users/bard/Code/mcp-brain-manager/dist/index.js"],
+      "env": {
+        "CODE_PATH": "/Users/bard/Code"
+      }
+    }
+  }
+}
+```
+
+- **Default**: Parent directory of mcp-brain-manager installation
+- **Recommended**: `/Users/bard/Code/` for macOS, `/home/username/projects/` for Linux
+- **Purpose**: Determines where new projects are created
+
 ## Migration from brain_execute
 
 If you're currently using `brain:brain_execute`, the Brain Manager provides:
@@ -301,6 +325,7 @@ If you're currently using `brain:brain_execute`, the Brain Manager provides:
 3. **Project Management** - Built-in project switching with stack
 4. **Semantic Understanding** - Intelligent mode selection
 5. **Template System** - Structured project initialization
+6. **Configurable Paths** - Uses CODE_PATH environment variable
 
 ## Troubleshooting
 

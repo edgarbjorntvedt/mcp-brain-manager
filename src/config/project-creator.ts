@@ -6,6 +6,11 @@
 import { BrainToolInstruction, BrainToolInstructions } from '../brain-instructions.js';
 import { ProjectConfiguration, SecureApiKeys, SecureConfigManager } from './secure-config.js';
 import { TemplateManager } from '../template-manager.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface ProjectCreationOptions {
   name: string;
@@ -62,7 +67,10 @@ export class AutomatedProjectCreator {
       }
       
       // Generate project setup commands
-      const projectPath = `/home/edgar/github/${options.name}`;
+      // Default to parent directory of this project (e.g., /Users/bard/Code/ if this is in /Users/bard/Code/mcp-brain-manager)
+      const defaultCodePath = path.resolve(__dirname, '../../..');
+      const codePath = process.env.CODE_PATH || defaultCodePath;
+      const projectPath = `${codePath}/${options.name}`;
       const setupCommands = this.generateSetupCommands(options, config, projectPath);
       
       // Create instruction to execute all commands

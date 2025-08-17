@@ -20,6 +20,13 @@ npm install
 npm run build
 ```
 
+## Environment Variables
+
+**CODE_PATH** (optional): Base directory for your code projects
+- Default: Parent directory of mcp-brain-manager installation
+- Example: `/Users/bard/Code/` 
+- Used by project creation tools to determine where to create new projects
+
 ## Configuration
 
 Add to your MCP settings:
@@ -29,7 +36,10 @@ Add to your MCP settings:
   "mcpServers": {
     "brain-manager": {
       "command": "node",
-      "args": ["/path/to/mcp-brain-manager/dist/index.js"],
+      "args": ["/Users/bard/Code/mcp-brain-manager/dist/index.js"],
+      "env": {
+        "CODE_PATH": "/Users/bard/Code"
+      },
       "description": "Intelligent Brain system management"
     }
   }
@@ -236,7 +246,9 @@ mcp-brain-manager/
 │   ├── index.ts           # MCP server entry point
 │   ├── brain-manager.ts   # Core management logic
 │   ├── semantic-router.ts # Intent classification
-│   └── template-manager.ts # Project templates
+│   ├── template-manager.ts # Project templates
+│   └── config/
+│       └── project-creator.ts # Automated project creation
 ├── dist/                  # Compiled output
 └── package.json
 ```
