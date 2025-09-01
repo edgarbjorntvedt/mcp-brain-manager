@@ -170,11 +170,17 @@ export class BrainManagerV2 {
     projectName?: string
   ): Promise<UpdateProposal> {
     // Validate for sensitive data
+    console.log('🔍 Debug: Validating updates:', JSON.stringify(updates, null, 2));
     const validation = validateForSensitiveData(updates);
+    console.log('🔍 Debug: Validation result:', validation);
+    
     if (!validation.isValid) {
+      console.log('🚫 Debug: Security validation failed!');
       const errorMessage = this.createSecurityErrorMessage(validation.errors);
       throw new Error(errorMessage);
     }
+    
+    console.log('✅ Debug: Security validation passed');
     
     // Additional warning for potential sensitive data
     if (validation.warnings.length > 0) {
@@ -230,10 +236,15 @@ export class BrainManagerV2 {
         break;
 
       case 'milestone':
+        // Validate required fields
+        if (!updates.title && !updates.milestone_title) {
+          throw new Error('Milestone updates require a "title" field. Example: {"title": "Project Phase Complete", "description": "..."}')
+        }
+        
         const milestone: Milestone = {
           timestamp: new Date().toISOString(),
-          title: updates.title,
-          description: updates.description || '',
+          title: updates.title || updates.milestone_title || 'Untitled Milestone',
+          description: updates.description || updates.milestone_description || '',
           artifacts: updates.artifacts || []
         };
         proposedContext.milestones.push(milestone);
@@ -253,6 +264,31 @@ export class BrainManagerV2 {
           source: updates.source || 'observation'
         });
         changesMade.push(`Recorded insight: ${updates.insight}`);
+        break;
+
+      case 'metadata':
+        // Flexible metadata update - merge any additional fields
+        if (!proposedContext.metadata) {
+          proposedContext.metadata = {};
+        }
+        
+        // Merge all update fields into metadata
+        Object.assign(proposedContext.metadata, updates);
+        
+        const metadataKeys = Object.keys(updates);
+        changesMade.push(`Updated metadata: ${metadataKeys.join(', ')}`);
+        break;
+
+      case 'context':
+        // Full context update - allows updating any project field
+        const contextUpdates = { ...updates };
+        delete contextUpdates.projectName; // Don't allow name changes
+        
+        Object.assign(proposedContext, contextUpdates);
+        proposedContext.lastModified = new Date().toISOString();
+        
+        const contextKeys = Object.keys(contextUpdates);
+        changesMade.push(`Updated context: ${contextKeys.join(', ')}`);
         break;
     }
 
