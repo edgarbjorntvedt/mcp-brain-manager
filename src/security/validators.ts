@@ -60,6 +60,32 @@ export interface ValidationResult {
 }
 
 /**
+ * Gets a human-friendly description for a security pattern
+ */
+function getPatternDescription(pattern: RegExp): string {
+  const source = pattern.source;
+  
+  if (source.includes('sk[-_]')) return 'Stripe-like secret key';
+  if (source.includes('pk[-_]')) return 'public/private key';
+  if (source.includes('api[-_]')) return 'API key';
+  if (source.includes('key[-_]')) return 'secret key';
+  if (source.includes('token[-_]')) return 'access token';
+  if (source.includes('Bearer')) return 'Bearer token';
+  if (source.includes('AKIA')) return 'AWS access key';
+  if (source.includes('AIza')) return 'Google API key';
+  if (source.includes('mongodb') || source.includes('postgres') || source.includes('mysql')) {
+    return 'database connection string';
+  }
+  if (source.includes('oauth')) return 'OAuth token';
+  if (source.includes('api[_-]?key')) return 'API key';
+  if (source.includes('secret[_-]?key')) return 'secret key';
+  if (source.includes('private[_-]?key')) return 'private key';
+  if (source.includes('[0-9a-f]{8}-[0-9a-f]{4}')) return 'UUID (potential secret)';
+  
+  return 'sensitive data pattern';
+}
+
+/**
  * Validates if a value contains sensitive data that shouldn't be stored
  */
 export function validateForSensitiveData(value: any, key?: string): ValidationResult {
@@ -92,8 +118,10 @@ export function validateForSensitiveData(value: any, key?: string): ValidationRe
 
   // Check for sensitive patterns
   for (const pattern of SENSITIVE_PATTERNS) {
-    if (pattern.test(valueStr)) {
-      result.errors.push(`Value contains pattern matching sensitive data: ${pattern.source}`);
+    const match = valueStr.match(pattern);
+    if (match) {
+      const detectedValue = match[0].substring(0, Math.min(20, match[0].length)) + (match[0].length > 20 ? '...' : '');
+      result.errors.push(`Detected ${getPatternDescription(pattern)} in value: "${detectedValue}"`);
       result.isValid = false;
     }
   }

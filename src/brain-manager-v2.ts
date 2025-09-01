@@ -172,7 +172,8 @@ export class BrainManagerV2 {
     // Validate for sensitive data
     const validation = validateForSensitiveData(updates);
     if (!validation.isValid) {
-      throw new Error(`Security validation failed: ${validation.errors.join('; ')}. Remove sensitive data like API keys, passwords, or tokens before storing.`);
+      const errorMessage = this.createSecurityErrorMessage(validation.errors);
+      throw new Error(errorMessage);
     }
     
     // Additional warning for potential sensitive data
@@ -718,6 +719,34 @@ ${project.currentFocus}
         : 0,
       decisionsPerWeek: Math.round(project.keyDecisions.length / weeksActive)
     };
+  }
+
+  /**
+   * Creates a user-friendly security error message with actionable advice
+   */
+  private createSecurityErrorMessage(errors: string[]): string {
+    const message = `🔒 SECURITY BLOCK: Cannot store sensitive data in Brain state.
+
+🚫 Detected Issues:
+${errors.map(error => `   • ${error}`).join('\n')}
+
+✅ What to do instead:
+   • Store API keys as environment variables (process.env.API_KEY)
+   • Use .env files for local development (not committed to git)
+   • Reference credentials by name, not actual values
+   • Use secure configuration management tools
+
+💡 Safe examples:
+   Instead of: {"apiKey": "sk-1234..."}
+   Use:        {"apiKeyRef": "STRIPE_SECRET_KEY"}
+   
+   Instead of: {"password": "mypassword"}
+   Use:        {"passwordSet": true}
+
+🛡️  This protection prevents accidental exposure of sensitive data.
+    Brain Manager will never store API keys, passwords, or tokens.`;
+    
+    return message;
   }
   
   /**
