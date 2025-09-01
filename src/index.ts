@@ -100,11 +100,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             updateType: {
               type: 'string',
               enum: ['progress', 'decision', 'milestone', 'insight'],
-              description: 'Type of update'
+              description: 'Type of update. milestone requires "title" field'
             },
             updates: {
               type: 'object',
-              description: 'Update content'
+              description: 'Update content. For milestone: must include "title" field'
             },
             projectName: {
               type: 'string',
