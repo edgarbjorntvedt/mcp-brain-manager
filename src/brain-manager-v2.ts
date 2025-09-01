@@ -170,18 +170,14 @@ export class BrainManagerV2 {
     projectName?: string
   ): Promise<UpdateProposal> {
     // Validate for sensitive data
-    console.log('🔍 Debug: Validating updates:', JSON.stringify(updates, null, 2));
     const validation = validateForSensitiveData(updates);
-    console.log('🔍 Debug: Validation result:', validation);
     
     if (!validation.isValid) {
-      console.log('🚫 Debug: Security validation failed!');
+      console.log('🚫 Debug: Security validation failed!', JSON.stringify(updates, null, 2));
       const errorMessage = this.createSecurityErrorMessage(validation.errors);
       throw new Error(errorMessage);
     }
-    
-    console.log('✅ Debug: Security validation passed');
-    
+
     // Additional warning for potential sensitive data
     if (validation.warnings.length > 0) {
       console.warn('⚠️  Security warnings:', validation.warnings);

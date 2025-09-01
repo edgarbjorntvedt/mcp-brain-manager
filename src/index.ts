@@ -794,9 +794,14 @@ After calling this, execute all returned instructions in the order specified.`;
     if (error instanceof McpError) {
       throw error;
     }
+    // Log error for debugging (minimal)
+    console.error(`[${name}] Error:`, error instanceof Error ? error.message : String(error));
+    
+    // Return informative error message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     throw createError(
       ErrorCode.InternalError,
-      error instanceof Error ? error.message : 'Unknown error occurred'
+      `Brain Manager tool '${name}' failed: ${errorMessage}`
     );
   }
 });
